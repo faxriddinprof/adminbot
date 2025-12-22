@@ -11,6 +11,7 @@ from telegram.ext import (
     filters,
 )
 from dotenv import load_dotenv
+from asgiref.sync import sync_to_async
 
 # .env faylini yuklash
 load_dotenv()
@@ -73,9 +74,9 @@ async def forward_to_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     text = update.message.text
 
-    # Xabarni databasega saqlash
+    # Xabarni databasega saqlash (async da)
     try:
-        Message.objects.create(
+        await sync_to_async(Message.objects.create)(
             telegram_user_id=chat_id,
             username=user.username,
             first_name=user.first_name,
