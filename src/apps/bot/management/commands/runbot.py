@@ -11,6 +11,11 @@ from telegram.ext import (
     filters,
 )
 from dotenv import load_dotenv
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+django.setup()
+
+from src.apps.bot.models import Message, BotStatistics
 
 # .env faylini yuklash
 load_dotenv()
@@ -68,6 +73,20 @@ async def forward_to_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     chat_id = update.effective_chat.id
     text = update.message.text
+
+    # Xabarni databasega saqlash
+    try:
+        Message.objects.create(
+            telegram_user_id=chat_id,
+            username=user.username,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            message_text=text,
+            is_sent_to_admin=True
+        )
+        logger.info(f"Xabar saqlandi: {user.username or user.first_name}")
+    except Exception as e:
+        logger.error(f"Xabarni saqlashda xato: {e}")
 
     admin_text = (
         f"Новое сообщение от @{user.username or user.first_name} "
