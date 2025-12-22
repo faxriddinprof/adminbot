@@ -1,5 +1,6 @@
 import os
 import logging
+from pathlib import Path
 from django.core.management.base import BaseCommand
 from telegram import Update
 from telegram.ext import (
@@ -9,17 +10,42 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from dotenv import load_dotenv
+
+# .env faylini yuklash
+load_dotenv()
 
 # ЛОГИ
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(message)s", 
-    level=logging.INFO
-)
+# Logs papkasini yaratish
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / "bot.log"
+
+# Logger sozlash - ham fayl ga, ham console ga
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Format
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+# File handler - fayl ga yozish
+file_handler = logging.FileHandler(LOG_FILE, encoding='utf-8')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+
+# Console handler - console ga chiqarish
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter)
+
+# Handlerlarni qo'shish
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 # Токен и ADMIN_ID
-TOKEN = os.environ.get("BOT_TOKEN",)
-ADMIN_ID = int(os.environ.get("ADMIN_ID",))
+TOKEN = os.environ.get("BOT_TOKEN", "8594034343:AAFUoNY6WrN4zIhEmJlc4rrsCCeyYuZ9IvA")
+ADMIN_ID = int(os.environ.get("ADMIN_ID", "272996039"))
 
 WELCOME_TEXT = "Salom, men - adminbot! Murojaatingizni qoldiring, administratorga yetkazaman."
 
