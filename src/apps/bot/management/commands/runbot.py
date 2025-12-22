@@ -50,8 +50,8 @@ logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
 # Токен и ADMIN_ID
-TOKEN = os.environ.get("BOT_TOKEN","8594034343:AAFUoNY6WrN4zIhEmJlc4rrsCCeyYuZ9IvA")
-ADMIN_ID = int(os.environ.get("ADMIN_ID","1533007113"))
+TOKEN = os.environ.get("BOT_TOKEN",)
+ADMIN_ID = int(os.environ.get("ADMIN_ID",))
 
 WELCOME_TEXT = "Salom, men - adminbot! Murojaatingizni qoldiring, administratorga yetkazaman."
 
@@ -128,5 +128,4 @@ class Command(BaseCommand):
         app.run_polling(
             allowed_updates=Update.ALL_TYPES,
             drop_pending_updates=True,
-            pool_timeout=30,
         )
