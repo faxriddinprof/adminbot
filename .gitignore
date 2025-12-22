@@ -1,7 +1,44 @@
+# Environment variables
 .env
+.env.local
+
+# Virtual environment
 venv/
-logs/
-*.pyc
-__pycache__/
+env/
+ENV/
+
+# Database
+*.sqlite3
+*.db
 db.sqlite3
-bot.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Django
+*.log
+logs/
+*.pot
+media/
+staticfiles/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+backups/
+*.bak
+
+# PID files
+*.pid
