@@ -10,6 +10,7 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from telegram.request import HTTPXRequest
 from dotenv import load_dotenv
 from asgiref.sync import sync_to_async
 
@@ -49,8 +50,8 @@ logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
 # Токен и ADMIN_ID
-TOKEN = os.environ.get("BOT_TOKEN", "8594034343:AAFUoNY6WrN4zIhEmJlc4rrsCCeyYuZ9IvA")
-ADMIN_ID = int(os.environ.get("ADMIN_ID", "272996039"))
+TOKEN = os.environ.get("BOT_TOKEN",)
+ADMIN_ID = int(os.environ.get("ADMIN_ID",))
 
 WELCOME_TEXT = "Salom, men - adminbot! Murojaatingizni qoldiring, administratorga yetkazaman."
 
@@ -101,7 +102,16 @@ class Command(BaseCommand):
     help = "Telegram bot ishga tushirish"
 
     def handle(self, *args, **options):
-        app = ApplicationBuilder().token(TOKEN).build()
+        # Network sozlamalari - timeout oshirildi
+        request = HTTPXRequest(
+            connection_pool_size=8,
+            connect_timeout=30.0,
+            read_timeout=30.0,
+            write_timeout=30.0,
+            pool_timeout=30.0,
+        )
+        
+        app = ApplicationBuilder().token(TOKEN).request(request).build()
 
         app.add_handler(CommandHandler("start", start))
         app.add_handler(CommandHandler("ping", ping))
@@ -114,4 +124,9 @@ class Command(BaseCommand):
         logger.info("Бот запущен...")
         self.stdout.write(self.style.SUCCESS("Bot muvaffaqiyatli ishga tushdi!"))
         
-        app.run_polling()
+        # Polling sozlamalari
+        app.run_polling(
+            allowed_updates=Update.ALL_TYPES,
+            drop_pending_updates=True,
+            pool_timeout=30,
+        )
