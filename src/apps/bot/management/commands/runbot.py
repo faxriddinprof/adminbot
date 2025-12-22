@@ -11,13 +11,12 @@ from telegram.ext import (
     filters,
 )
 from dotenv import load_dotenv
-import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-django.setup()
-
-from src.apps.bot.models import Message, BotStatistics
 
 # .env faylini yuklash
+load_dotenv()
+
+# Django modellarini import qilish
+from src.apps.bot.models import Message, BotStatistics
 load_dotenv()
 
 # ЛОГИ

@@ -1,4 +1,4 @@
-.PHONY: help install venv setup migrate migrations superuser run server bot cleanup clean test freeze deploy-check logs
+.PHONY: help install venv setup migrate migrations superuser run server bot cleanup clean test freeze deploy-check logs start-all stop-all status
 
 # Default target
 help:
@@ -15,6 +15,8 @@ help:
 	@echo "  make superuser    - Admin foydalanuvchi yaratish"
 	@echo ""
 	@echo "🚀 Ishga tushirish:"
+	@echo "  make start-all    - Bot + Django serverni birga ishga tushirish ⭐"
+	@echo "  make stop-all     - Barcha processlarni to'xtatish"
 	@echo "  make run          - Telegram botni ishga tushirish"
 	@echo "  make server       - Django serverni ishga tushirish"
 	@echo "  make bot          - Botni background rejimda ishga tushirish"
@@ -26,6 +28,7 @@ help:
 	@echo "📊 Monitoring:"
 	@echo "  make logs         - Bot loglarini ko'rish (tail -f)"
 	@echo "  make stats        - Database statistikasi"
+	@echo "  make status       - Servislar holati"
 	@echo ""
 	@echo "🔧 Development:"
 	@echo "  make freeze       - requirements.txt ni yangilash"
@@ -64,37 +67,75 @@ setup: venv
 # Migratsiya fayllarini yaratish
 migrations:
 	@echo "📝 Migratsiya fayllar yaratilmoqda..."
-	python manage.py makemigrations
+	@bash -c "source venv/bin/activate && python manage.py makemigrations"
 	@echo "✅ Migratsiyalar yaratildi!"
 
 # Migratsiyalarni qo'llash
 migrate:
 	@echo "🗄️  Database migratsiya qilinmoqda..."
-	python manage.py migrate
+	@bash -c "source venv/bin/activate && python manage.py migrate"
 	@echo "✅ Migratsiya muvaffaqiyatli!"
 
 # Superuser yaratish
 superuser:
 	@echo "👤 Admin foydalanuvchi yaratish..."
-	python manage.py createsuperuser
+	@bash -c "source venv/bin/activate && python manage.py createsuperuser"
 
 # Telegram botni ishga tushirish
 run:
 	@echo "🤖 Telegram bot ishga tushirilmoqda..."
 	@echo "⚠️  To'xtatish uchun: Ctrl+C"
-	python manage.py runbot
+	@bash -c "source venv/bin/activate && python manage.py runbot"
 
 # Django serverni ishga tushirish
 server:
 	@echo "🌐 Django server ishga tushirilmoqda..."
 	@echo "Admin panel: http://127.0.0.1:8000/admin"
 	@echo "⚠️  To'xtatish uchun: Ctrl+C"
-	python manage.py runserver
+	@bash -c "source venv/bin/activate && python manage.py runserver"
+
+# Bot va serverni birga ishga tushirish
+start-all:
+	@echo "🚀 Bot va Django server birga ishga tushirilmoqda..."
+	@echo ""
+	@mkdir -p logs
+	@bash -c "source venv/bin/activate && nohup python manage.py runbot > logs/bot_output.log 2>&1 & echo \$$! > logs/bot.pid"
+	@sleep 2
+	@bash -c "source venv/bin/activate && nohup python manage.py runserver > logs/server_output.log 2>&1 & echo \$$! > logs/server.pid"
+	@sleep 2
+	@echo "✅ Barcha servislar ishga tushdi!"
+	@echo ""
+	@echo "📊 Status:"
+	@if [ -f logs/bot.pid ]; then echo "  🤖 Telegram Bot: Ishlamoqda (PID: $$(cat logs/bot.pid))"; fi
+	@if [ -f logs/server.pid ]; then echo "  🌐 Django Server: http://127.0.0.1:8000/admin (PID: $$(cat logs/server.pid))"; fi
+	@echo ""
+	@echo "📝 Loglar:"
+	@echo "  Bot: tail -f logs/bot_output.log"
+	@echo "  Server: tail -f logs/server_output.log"
+	@echo ""
+	@echo "⚠️  To'xtatish: make stop-all"
+
+# Barcha servislarni to'xtatish
+stop-all:
+	@echo "🛑 Barcha servislar to'xtatilmoqda..."
+	@if [ -f logs/bot.pid ]; then \
+		kill $$(cat logs/bot.pid) 2>/dev/null || true; \
+		rm -f logs/bot.pid; \
+		echo "  ✅ Telegram bot to'xtatildi"; \
+	fi
+	@if [ -f logs/server.pid ]; then \
+		kill $$(cat logs/server.pid) 2>/dev/null || true; \
+		rm -f logs/server.pid; \
+		echo "  ✅ Django server to'xtatildi"; \
+	fi
+	@pkill -f "python manage.py runbot" 2>/dev/null || true
+	@pkill -f "python manage.py runserver" 2>/dev/null || true
+	@echo "✅ Barcha servislar to'xtatildi!"
 
 # Botni background rejimda ishga tushirish
 bot:
 	@echo "🤖 Bot background rejimda ishga tushirilmoqda..."
-	nohup python manage.py runbot > logs/bot_output.log 2>&1 &
+	@bash -c "source venv/bin/activate && nohup python manage.py runbot > logs/bot_output.log 2>&1 &"
 	@echo "✅ Bot ishga tushdi!"
 	@echo "📊 Loglarni ko'rish: make logs"
 	@echo "⚠️  To'xtatish: pkill -f 'python manage.py runbot'"
@@ -102,7 +143,7 @@ bot:
 # 7 kundan eski xabarlarni o'chirish
 cleanup:
 	@echo "🗑️  Eski xabarlar tozalanmoqda..."
-	python manage.py cleanup_messages
+	@bash -c "source venv/bin/activate && python manage.py cleanup_messages"
 	@echo "✅ Tozalash tugadi!"
 
 # Cache va venv fayllarni tozalash
@@ -123,6 +164,10 @@ logs:
 	@echo ""
 	tail -f logs/bot.log
 
+# Servislar statusini tekshirish
+status:
+	@bash check_status.sh
+
 # Database statistikasi
 stats:
 	@echo "📊 Database statistikasi..."
@@ -137,12 +182,12 @@ freeze:
 # Testlarni ishga tushirish
 test:
 	@echo "🧪 Testlar ishga tushirilmoqda..."
-	python manage.py test
+	@bash -c "source venv/bin/activate && python manage.py test"
 
 # Django shell
 shell:
 	@echo "🐚 Django shell ochilmoqda..."
-	python manage.py shell
+	@bash -c "source venv/bin/activate && python manage.py shell"
 
 # Deploy uchun tekshirish
 deploy-check:
@@ -155,7 +200,7 @@ deploy-check:
 	@if [ -f requirements.txt ]; then echo "  ✅ requirements.txt mavjud"; else echo "  ❌ requirements.txt topilmadi!"; fi
 	@echo ""
 	@echo "3️⃣  Database migratison:"
-	@python manage.py showmigrations --list | grep -q "\[ \]" && echo "  ⚠️  Qo'llanmagan migratsiyalar bor!" || echo "  ✅ Barcha migratsiyalar qo'llangan"
+	@bash -c "source venv/bin/activate && python manage.py showmigrations --list | grep -q '\[ \]' && echo '  ⚠️  Qo'llanmagan migratsiyalar bor!' || echo '  ✅ Barcha migratsiyalar qo'llangan'"
 	@echo ""
 	@echo "4️⃣  Environment variables:"
 	@if [ ! -z "$$BOT_TOKEN" ]; then echo "  ✅ BOT_TOKEN sozlangan"; else echo "  ⚠️  BOT_TOKEN sozlanmagan"; fi
@@ -167,20 +212,20 @@ deploy-check:
 backup:
 	@echo "💾 Database backup yaratilmoqda..."
 	@mkdir -p backups
-	@python manage.py dumpdata --indent 2 > backups/backup_$$(date +%Y%m%d_%H%M%S).json
+	@bash -c "source venv/bin/activate && python manage.py dumpdata --indent 2 > backups/backup_$$(date +%Y%m%d_%H%M%S).json"
 	@echo "✅ Backup yaratildi: backups/"
 
 # Database restore
 restore:
 	@echo "♻️  Database restore qilinmoqda..."
 	@if [ -z "$(FILE)" ]; then echo "❌ FILE parametri kerak: make restore FILE=backup.json"; exit 1; fi
-	python manage.py loaddata $(FILE)
+	@bash -c "source venv/bin/activate && python manage.py loaddata $(FILE)"
 	@echo "✅ Database restore qilindi!"
 
 # Yangi app yaratish
 app:
 	@if [ -z "$(NAME)" ]; then echo "❌ NAME parametri kerak: make app NAME=myapp"; exit 1; fi
 	@echo "📦 Yangi app yaratilmoqda: $(NAME)"
-	python manage.py startapp $(NAME) src/apps/$(NAME)
+	@bash -c "source venv/bin/activate && python manage.py startapp $(NAME) src/apps/$(NAME)"
 	@echo "✅ App yaratildi: src/apps/$(NAME)"
 	@echo "⚠️  settings.py ga qo'shishni unutmang: 'src.apps.$(NAME)'"
