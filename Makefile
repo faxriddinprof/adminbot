@@ -121,15 +121,20 @@ stop-all:
 	@if [ -f logs/bot.pid ]; then \
 		kill $$(cat logs/bot.pid) 2>/dev/null || true; \
 		rm -f logs/bot.pid; \
-		echo "  ✅ Telegram bot to'xtatildi"; \
+		echo "  ✅ Telegram bot to'xtatildi (PID file)"; \
 	fi
 	@if [ -f logs/server.pid ]; then \
 		kill $$(cat logs/server.pid) 2>/dev/null || true; \
 		rm -f logs/server.pid; \
-		echo "  ✅ Django server to'xtatildi"; \
+		echo "  ✅ Django server to'xtatildi (PID file)"; \
 	fi
-	@pkill -f "python manage.py runbot" 2>/dev/null || true
-	@pkill -f "python manage.py runserver" 2>/dev/null || true
+	@pkill -f "python.*manage.py runbot" 2>/dev/null && echo "  ✅ Bot processlar to'xtatildi" || true
+	@pkill -f "python.*manage.py runserver" 2>/dev/null && echo "  ✅ Server processlar to'xtatildi" || true
+	@sleep 1
+	@if pgrep -f "manage.py" > /dev/null; then \
+		echo "  ⚠️  Ba'zi processlar hali ishlayabdi, majburlab to'xtatilmoqda..."; \
+		pkill -9 -f "manage.py" 2>/dev/null || true; \
+	fi
 	@echo "✅ Barcha servislar to'xtatildi!"
 
 # Botni background rejimda ishga tushirish
