@@ -46,7 +46,7 @@ class MessageAdmin(admin.ModelAdmin):
             'padding: 3px 10px; border-radius: 3px;">{}</span>',
             color, text
         )
-    age_badge.short_description = "Yoshi"
+    age_badge.short_description = "Kuni"
     
     def age_display(self, obj):
         """Admin detail view uchun yosh"""
@@ -87,13 +87,13 @@ class BotStatisticsAdmin(admin.ModelAdmin):
             .order_by('-msg_count')[:5]
         
         html = f"""
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
-            <h3>📊 Statistika</h3>
+        <div style="background: rgba(0,0,0,0.05); padding: 15px; border-radius: 5px; border: 1px solid rgba(0,0,0,0.1);">
+            <h3 style="margin-top: 0;">📊 Statistika</h3>
             <p><strong>Bugungi xabarlar:</strong> {today_messages}</p>
             <p><strong>Bu haftalik xabarlar:</strong> {week_messages}</p>
-            <hr>
+            <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1);">
             <h4>👥 Eng faol foydalanuvchilar:</h4>
-            <ul>
+            <ul style="margin-bottom: 0;">
         """
         
         for user in top_users:
