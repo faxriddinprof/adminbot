@@ -1,4 +1,4 @@
-.PHONY: help install venv setup migrate migrations superuser run server bot cleanup clean test freeze deploy-check logs start-all stop-all status
+.PHONY: help install venv setup migrate migrations superuser run server bot cleanup clean test freeze deploy-check logs start-all stop-all status git-commit git-push git-pull git-status git-clean
 
 # Default target
 help:
@@ -24,6 +24,7 @@ help:
 	@echo "🧹 Tozalash:"
 	@echo "  make cleanup      - 7 kundan eski xabarlarni o'chirish"
 	@echo "  make clean        - Cache va venv fayllarni tozalash"
+	@echo "  make git-clean    - Git cache tozalash va .gitignore qo'llash"
 	@echo ""
 	@echo "📊 Monitoring:"
 	@echo "  make logs         - Bot loglarini ko'rish (tail -f)"
@@ -37,6 +38,13 @@ help:
 	@echo ""
 	@echo "📤 Deploy:"
 	@echo "  make deploy-check - Deploy uchun tekshirish"
+	@echo ""
+	@echo "🔀 Git:"
+	@echo "  make git-status   - Git status ko'rsatish"
+	@echo "  make git-commit   - O'zgarishlarni commit qilish (MSG='message')"
+	@echo "  make git-push     - O'zgarishlarni GitHub'ga push qilish"
+	@echo "  make git-pull     - GitHub'dan o'zgarishlarni olish"
+	@echo "  make git-clean    - Git cache tozalash va ignored fayllarni o'chirish"
 
 # Virtual environment yaratish
 venv:
@@ -226,6 +234,84 @@ restore:
 	@if [ -z "$(FILE)" ]; then echo "❌ FILE parametri kerak: make restore FILE=backup.json"; exit 1; fi
 	@bash -c "source venv/bin/activate && python manage.py loaddata $(FILE)"
 	@echo "✅ Database restore qilindi!"
+
+# ==================== GIT OPERATIONS ====================
+
+# Git status
+git-status:
+	@echo "📊 Git status:"
+	@echo ""
+	@git status
+
+# Git commit
+git-commit:
+	@if [ -z "$(MSG)" ]; then \
+		echo "❌ Commit message kerak!"; \
+		echo "Misol: make git-commit MSG='Yangi funksiya qo'shildi'"; \
+		exit 1; \
+	fi
+	@echo "💾 O'zgarishlar commit qilinmoqda..."
+	@git add .
+	@git commit -m "$(MSG)"
+	@echo "✅ Commit qilindi!"
+	@echo ""
+	@echo "📤 GitHub'ga yuborish uchun: make git-push"
+
+# Git push
+git-push:
+	@echo "📤 O'zgarishlar GitHub'ga yuborilmoqda..."
+	@git push origin $$(git branch --show-current)
+	@echo "✅ GitHub'ga yuborildi!"
+	@echo ""
+	@echo "🔗 Repository: https://github.com/faxriddinprof/adminbot"
+
+# Git pull
+git-pull:
+	@echo "📥 GitHub'dan o'zgarishlar olinmoqda..."
+	@git pull origin $$(git branch --show-current)
+	@echo "✅ O'zgarishlar olindi!"
+
+# Git cache tozalash va .gitignore qo'llash
+git-clean:
+	@echo "🧹 Git cache tozalanmoqda..."
+	@echo ""
+	@echo "⚠️  Bu buyruq barcha .gitignore dagi fayllarni git trackingdan olib tashlaydi"
+	@echo "⚠️  Lokal fayllar o'chirilmaydi, faqat git tracking to'xtatiladi"
+	@echo ""
+	@read -p "Davom etishni xohlaysizmi? (y/n): " confirm; \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		echo "🗑️  Git cache tozalanmoqda..."; \
+		git rm -r --cached . 2>/dev/null || true; \
+		echo "📋 Barcha fayllar qayta qo'shilmoqda..."; \
+		git add .; \
+		echo "✅ Git cache tozalandi!"; \
+		echo ""; \
+		echo "📊 O'zgarishlar:"; \
+		git status --short; \
+		echo ""; \
+		echo "💾 Commit qilish: make git-commit MSG='Git cache tozalandi'"; \
+	else \
+		echo "❌ Bekor qilindi"; \
+	fi
+
+# Tez commit + push (dev uchun)
+git-save:
+	@if [ -z "$(MSG)" ]; then \
+		echo "❌ Commit message kerak!"; \
+		echo "Misol: make git-save MSG='Tez saqlash'"; \
+		exit 1; \
+	fi
+	@echo "💾 Saqlash va yuborish..."
+	@git add .
+	@git commit -m "$(MSG)"
+	@git push origin $$(git branch --show-current)
+	@echo "✅ Saqlandi va GitHub'ga yuborildi!"
+
+# .gitignore dan ignored fayllarni ko'rsatish
+git-ignored:
+	@echo "📋 .gitignore'da ko'rsatilgan fayllar:"
+	@echo ""
+	@git status --ignored --short | grep '^!!'
 
 # Yangi app yaratish
 app:
