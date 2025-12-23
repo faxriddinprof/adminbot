@@ -94,8 +94,12 @@ async def forward_to_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"(id={chat_id}):\n\n{text}"
     )
 
-    await context.bot.send_message(chat_id=ADMIN_ID, text=admin_text)
-    await update.message.reply_text("Rahmat, murojaatingiz administratorga jo'natildi.")
+    try:
+        await context.bot.send_message(chat_id=ADMIN_ID, text=admin_text)
+        await update.message.reply_text("Rahmat, murojaatingiz administratorga jo'natildi.")
+    except Exception as e:
+        logger.error(f"Adminga xabar yuborishda xato: {e}")
+        await update.message.reply_text("Rahmat, xabaringiz qabul qilindi.")
 
 
 class Command(BaseCommand):
