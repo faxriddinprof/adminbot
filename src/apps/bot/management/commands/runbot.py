@@ -101,6 +101,19 @@ async def forward_to_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 class Command(BaseCommand):
     help = "Telegram bot ishga tushirish"
 
+    async def post_init(self, application):
+        """Bot ishga tushgandan keyin description sozlash"""
+        description = """Kanaldan mamnunmisiz ? 
+Sizga ko'proq qaysi mavzular qiziq ? 
+yoki Savollaringiz bormi ?"""
+        
+        try:
+            await application.bot.set_my_description(description=description)
+            await application.bot.set_my_short_description(short_description="Fikr-mulohazalaringizni yuboring")
+            logger.info("Bot description sozlandi")
+        except Exception as e:
+            logger.error(f"Description sozlashda xato: {e}")
+
     def handle(self, *args, **options):
         # Network sozlamalari - timeout oshirildi
         request = HTTPXRequest(
@@ -111,7 +124,7 @@ class Command(BaseCommand):
             pool_timeout=30.0,
         )
         
-        app = ApplicationBuilder().token(TOKEN).request(request).build()
+        app = ApplicationBuilder().token(TOKEN).request(request).post_init(self.post_init).build()
 
         app.add_handler(CommandHandler("start", start))
         app.add_handler(CommandHandler("ping", ping))
